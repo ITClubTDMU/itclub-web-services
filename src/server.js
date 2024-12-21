@@ -1,13 +1,20 @@
-import "dotenv/config";
-
 import express from "express";
+import cors from "cors";
 import { CONNECT_DB, GET_DB } from "./config/mongodb";
+import { env } from "./config/environment";
+import { errorHandlingMiddleware } from "./middlewares/errorHandlingMiddleware";
+import APIs_V1 from "./routes/v1";
+import cookieParser from "cookie-parser";
+import { corsOptions } from "./config/cors";
 
 const START_SERVER = () => {
   const app = express();
 
-  const hostname = "localhost";
-  const port = 8017;
+  app.use(express.json());
+
+  app.use(cors(corsOptions));
+
+  app.use(cookieParser());
 
   app.get("/", async (req, res) => {
     // Test Absolute import mapOrder
@@ -15,9 +22,13 @@ const START_SERVER = () => {
     res.end("<h1>Hello World!</h1><hr>");
   });
 
-  app.listen(port, hostname, () => {
+  app.use("/v1", APIs_V1);
+
+  app.use(errorHandlingMiddleware);
+
+  app.listen(env.APP_PORT, env.APP_HOST, () => {
     // eslint-disable-next-line no-console
-    console.log(`Server is running at http://${hostname}:${port}/`);
+    console.log(`Server is running at http://${env.APP_HOST}:${env.APP_PORT}/`);
   });
 };
 
