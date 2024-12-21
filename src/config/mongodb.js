@@ -3,10 +3,11 @@
 
 
 import { MongoClient, ServerApiVersion } from "mongodb";
+import { env } from "./environment";
 
 let dbInstance = null;
 
-const mongoClient = new MongoClient(process.env.MONGODB_URI, {
+const mongoClient = new MongoClient(env.MONGODB_URI, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -16,7 +17,7 @@ const mongoClient = new MongoClient(process.env.MONGODB_URI, {
 
 export const CONNECT_DB = async () => {
   await mongoClient.connect();
-  dbInstance = mongoClient.db(process.env.DB_NAME);
+  dbInstance = mongoClient.db(env.DB_NAME);
 };
 
 export const GET_DB = () => {

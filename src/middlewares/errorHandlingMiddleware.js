@@ -1,17 +1,13 @@
-
+import { StatusCodes } from "~/utils/statusCodes";
 
 export const errorHandlingMiddleware = (err, req, res, next) => {
-  if(!err.statusCode) err.statusCode = 500;
-
+  if (!err.statusCode) err.statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 
   const resError = {
     statusCode: err.statusCode,
-    message: err.message,
-    stack: err.stack
-  }
+    message: err.message || StatusCodes[err.statusCode],
+    stack: err.stack,
+  };
 
-  console.log(resError);
-
-
-  res.status(resError.statusCode).json(resError)
-}
+  res.status(resError.statusCode).json(resError);
+};

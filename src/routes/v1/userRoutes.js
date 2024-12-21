@@ -1,11 +1,10 @@
 import express from "express";
+import { userController } from "~/controllers/userController";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.status(200).json({ message: "LIST USER" });
-});
-
+router.route("/").get(userController.findAll).post(userController.createNew);
+router.route("/:id").get(userController.findOne).put(userController.updateOne);
 
 const userRoutes = router;
 export default userRoutes;
