@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "~/config/environment";
-import fsPromises from "fs/promises";
-import path from "path";
+// import fsPromises from "fs/promises";
+// import path from "path";
 import { userService } from "~/services/userService";
 import { StatusCodes } from "~/utils/statusCodes";
 import { Result } from "~/utils/result";
@@ -13,6 +13,15 @@ const handleLogin = async (req, res, next) => {
       body.username ? body.username : body.email
     );
     console.log(user);
+    if (!user) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json(Result(StatusCodes.UNAUTHORIZED, "User not found"));
+    } else if (body.username && user.password !== body.password) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json(Result(StatusCodes.UNAUTHORIZED, "Password incorrect"));
+    }
     // create JWTs
     const accessToken = jwt.sign(
       { userId: user._id },
@@ -28,10 +37,10 @@ const handleLogin = async (req, res, next) => {
     await userService.updateOne(user.username ? user.username : user.email, {
       refreshToken,
     });
-    await fsPromises.writeFile(
-      path.join(__dirname, "..", "models", "users.json"),
-      JSON.stringify(await userService.findAll())
-    );
+    // await fsPromises.writeFile(
+    //   path.join(__dirname, "..", "models", "users.json"),
+    //   JSON.stringify(await userService.findAll())
+    // );
 
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
@@ -67,10 +76,10 @@ const handleLogout = async (req, res, next) => {
     await userService.updateOne(user.username ? user.username : user.email, {
       refreshToken: "?",
     });
-    await fsPromises.writeFile(
-      path.join(__dirname, "..", "models", "users.json"),
-      JSON.stringify(await userService.findAll())
-    );
+    // await fsPromises.writeFile(
+    //   path.join(__dirname, "..", "models", "users.json"),
+    //   JSON.stringify(await userService.findAll())
+    // );
 
     res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
     res.sendStatus(StatusCodes.NO_CONTENT);
