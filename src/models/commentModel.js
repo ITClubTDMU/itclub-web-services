@@ -3,7 +3,11 @@ import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
-import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
+import {
+  OBJECT_ID_RULE,
+  OBJECT_ID_RULE_MESSAGE,
+  validateData,
+} from "~/utils/validators";
 
 const COMMENT_COLLECTION_NAME = "comments";
 const COMMENT_COLLECTION_SCHEMA = Joi.object({
@@ -39,19 +43,9 @@ const COMMENT_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
-const validateData = async (data) => {
-  try {
-    return await COMMENT_COLLECTION_SCHEMA.validateAsync(data, {
-      abortEarly: false,
-    });
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
 const createNew = async (data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(COMMENT_COLLECTION_SCHEMA, data);
 
     const createdComment = await GET_DB()
       .collection(COMMENT_COLLECTION_NAME)
@@ -77,11 +71,13 @@ const findOneById = async (id) => {
   }
 };
 
-const findOne = async (query) => {
+const findOne = async (id) => {
   try {
     const comment = await GET_DB()
       .collection(COMMENT_COLLECTION_NAME)
-      .findOne(query);
+      .findOne({
+        _id: new ObjectId(id),
+      });
 
     return comment;
   } catch (error) {

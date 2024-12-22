@@ -3,6 +3,7 @@ import Joi from "joi";
 import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
+import { validateData } from "~/utils/validators";
 
 const USER_COLLECTION_NAME = "users";
 const USER_COLLECTION_SCHEMA = Joi.object({
@@ -23,19 +24,9 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   _destroy: Joi.boolean().default(false),
 });
 
-const validateUser = async (data) => {
-  try {
-    return await USER_COLLECTION_SCHEMA.validateAsync(data, {
-      abortEarly: false,
-    });
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
 const createNew = async (data) => {
   try {
-    const validatedData = await validateUser(data);
+    const validatedData = await validateData(USER_COLLECTION_SCHEMA, data);
 
     const createdUser = await GET_DB()
       .collection(USER_COLLECTION_NAME)
@@ -63,7 +54,11 @@ const findOneById = async (id) => {
 
 const findOne = async (query) => {
   try {
-    const user = await GET_DB().collection(USER_COLLECTION_NAME).findOne(query);
+    const user = await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .findOne({
+        $or: [{ username: query }, { email: query }, { refreshToken: query }],
+      });
 
     return user;
   } catch (error) {
@@ -86,7 +81,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateUser(data);
+    const validatedData = await validateData(USER_COLLECTION_SCHEMA, data);
 
     const updatedUser = await GET_DB()
       .collection(USER_COLLECTION_NAME)

@@ -1,5 +1,4 @@
 import { categoryModel } from "~/models/categoryModel";
-import { ObjectId } from "mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
 
@@ -24,9 +23,7 @@ const findAll = async () => {
 
 const findOne = async (id) => {
   try {
-    const category = await categoryModel.findOne({
-      _id: new ObjectId(id),
-    });
+    const category = await categoryModel.findOne(id);
     if (category === null) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Category not found");
     }

@@ -1,5 +1,4 @@
 import { commentModel } from "~/models/commentModel";
-import { ObjectId } from "mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
 
@@ -24,9 +23,7 @@ const findAll = async () => {
 
 const findOne = async (id) => {
   try {
-    const comment = await commentModel.findOne({
-      _id: new ObjectId(id),
-    });
+    const comment = await commentModel.findOne(id);
     if (comment === null) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Comment not found");
     }

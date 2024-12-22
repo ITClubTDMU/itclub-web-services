@@ -1,5 +1,4 @@
 import { postModel } from "~/models/postModel";
-import { ObjectId } from "mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
 
@@ -24,9 +23,7 @@ const findAll = async () => {
 
 const findOne = async (id) => {
   try {
-    const post = await postModel.findOne({
-      _id: new ObjectId(id),
-    });
+    const post = await postModel.findOne(id);
     if (post === null) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Post not found");
     }

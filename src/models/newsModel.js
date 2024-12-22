@@ -3,7 +3,11 @@ import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
-import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
+import {
+  OBJECT_ID_RULE,
+  OBJECT_ID_RULE_MESSAGE,
+  validateData,
+} from "~/utils/validators";
 
 const NEWS_COLLECTION_NAME = "newses";
 const NEWS_COLLECTION_SCHEMA = Joi.object({
@@ -24,19 +28,9 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
-const validateData = async (data) => {
-  try {
-    return await NEWS_COLLECTION_SCHEMA.validateAsync(data, {
-      abortEarly: false,
-    });
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
 const createNew = async (data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
 
     const createdNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
@@ -62,9 +56,13 @@ const findOneById = async (id) => {
   }
 };
 
-const findOne = async (query) => {
+const findOne = async (id) => {
   try {
-    const news = await GET_DB().collection(NEWS_COLLECTION_NAME).findOne(query);
+    const news = await GET_DB()
+      .collection(NEWS_COLLECTION_NAME)
+      .findOne({
+        _id: new ObjectId(id),
+      });
 
     return news;
   } catch (error) {

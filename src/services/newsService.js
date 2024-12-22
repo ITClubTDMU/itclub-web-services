@@ -1,5 +1,4 @@
 import { newsModel } from "~/models/newsModel";
-import { ObjectId } from "mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
 
@@ -24,9 +23,7 @@ const findAll = async () => {
 
 const findOne = async (id) => {
   try {
-    const news = await newsModel.findOne({
-      _id: new ObjectId(id),
-    });
+    const news = await newsModel.findOne(id);
     if (news === null) {
       throw new ApiError(StatusCodes.NOT_FOUND, "News not found");
     }

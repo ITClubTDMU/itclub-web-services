@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
+import { validateData } from "~/utils/validators";
 
 const CATEGORY_COLLECTION_NAME = "categories";
 const CATEGORY_COLLECTION_SCHEMA = Joi.object({
@@ -12,19 +13,9 @@ const CATEGORY_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
-const validateData = async (data) => {
-  try {
-    return await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
-      abortEarly: false,
-    });
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
 const createNew = async (data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(CATEGORY_COLLECTION_SCHEMA, data);
 
     const createdCategory = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
@@ -50,11 +41,13 @@ const findOneById = async (id) => {
   }
 };
 
-const findOne = async (query) => {
+const findOne = async (id) => {
   try {
     const category = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
-      .findOne(query);
+      .findOne({
+        _id: new ObjectId(id),
+      });
 
     return category;
   } catch (error) {
