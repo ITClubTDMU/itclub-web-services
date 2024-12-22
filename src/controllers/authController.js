@@ -9,19 +9,23 @@ import { Result } from "~/utils/result";
 const handleLogin = async (req, res, next) => {
   try {
     const body = await userService.validateRequest(req.body);
-    const user = await userService.findOne(
+    let user = await userService.findOne(
       body.username ? body.username : body.email
     );
-    console.log(user);
     if (!user) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json(Result(StatusCodes.UNAUTHORIZED, "User not found"));
+      if (body.email) {
+        user = await userService.createNew(body);
+      } else {
+        return res
+          .status(StatusCodes.UNAUTHORIZED)
+          .json(Result(StatusCodes.UNAUTHORIZED, "User not found"));
+      }
     } else if (body.username && user.password !== body.password) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json(Result(StatusCodes.UNAUTHORIZED, "Password incorrect"));
     }
+    console.log(user);
     // create JWTs
     const accessToken = jwt.sign(
       { userId: user._id },
@@ -50,7 +54,9 @@ const handleLogin = async (req, res, next) => {
     });
     res
       .status(StatusCodes.OK)
-      .json(Result(StatusCodes.OK, "Login successful", { accessToken }));
+      .json(
+        Result(StatusCodes.OK, "Login successful", { ...user, accessToken })
+      );
   } catch (error) {
     next(error);
   }

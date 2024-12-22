@@ -12,9 +12,9 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   roles: Joi.array()
     .items(Joi.string().valid("user", "admin"))
     .default(["user"]),
-  fullName: Joi.string().trim().min(3).max(50),
+  fullName: Joi.string().trim().min(3).max(50).default("Anonymous"),
   avatar: Joi.string().uri().default("/avatar_member.webp"),
-  labels: Joi.array().items(Joi.string().trim().min(3).max(30)),
+  labels: Joi.array().items(Joi.string().trim().min(3).max(30)).default([]),
   contribution: Joi.number().integer().min(0).default(0),
   refreshToken: Joi.string().default("?"),
 
