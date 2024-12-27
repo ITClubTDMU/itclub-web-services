@@ -30,22 +30,7 @@ const handleLogin = async (req, res, next) => {
       env.ACCESS_TOKEN_SECRET,
       { expiresIn: "30m" }
     );
-    const refreshToken = jwt.sign(
-      { userId: user._id },
-      env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
 
-    await userService.updateOne(user.username ? user.username : user.email, {
-      refreshToken,
-    });
-
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      sameSite: "None",
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24,
-    });
     res
       .status(StatusCodes.OK)
       .json(
@@ -56,30 +41,13 @@ const handleLogin = async (req, res, next) => {
   }
 };
 
-const handleLogout = async (req, res, next) => {
+const handleRegister = async (req, res, next) => {
   try {
-    const cookies = req.cookies;
-    if (!cookies?.jwt) {
-      return res.sendStatus(StatusCodes.NO_CONTENT);
-    }
-    const refreshToken = cookies.jwt;
-    const user = await userService.findOne(refreshToken);
-    if (!user) {
-      res.clearCookie("jwt", {
-        httpOnly: true,
-        sameSite: "None",
-        secure: true,
-      });
-      return res.sendStatus(StatusCodes.NO_CONTENT);
-    }
-
-    await userService.updateOne(user.username ? user.username : user.email, {
-      refreshToken: "?",
-    });
-
-    res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
-    
-    res.sendStatus(StatusCodes.NO_CONTENT);
+    const body = await userService.validateRequest(req.body);
+    const user = await userService.createNew(body);
+    res
+      .status(StatusCodes.CREATED)
+      .json(Result(StatusCodes.CREATED, "User created", user));
   } catch (error) {
     next(error);
   }
@@ -87,5 +55,5 @@ const handleLogout = async (req, res, next) => {
 
 export const authController = {
   handleLogin,
-  handleLogout,
+  handleRegister,
 };

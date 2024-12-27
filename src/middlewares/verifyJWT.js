@@ -13,10 +13,6 @@ export const verifyJWT = (req, res, next) => {
     if (err) {
       return res.sendStatus(StatusCodes.FORBIDDEN); // Forbidden - invalid token
     }
-    const cookies = req.cookies;
-    if (!cookies?.jwt) {
-      return res.sendStatus(StatusCodes.UNAUTHORIZED);
-    }
     req.user = decoded.userId;
     next();
   });

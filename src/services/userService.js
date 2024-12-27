@@ -19,9 +19,10 @@ const validateRequest = async (reqBody) => {
 const createNew = async (reqBody) => {
   try {
     const body = await validateRequest(reqBody);
-    const query = body.username ? body.username : body.email;
-    if (await userModel.findOne(query)) {
-      throw new ApiError(StatusCodes.CONFLICT, "User already exists");
+    if (body.username && (await userModel.findOne(body.username))) {
+      throw new ApiError(StatusCodes.CONFLICT, "Username already exists");
+    } else if (body.email && (await userModel.findOne(body.email))) {
+      throw new ApiError(StatusCodes.CONFLICT, "Email already exists");
     }
 
     const newUser = await userModel.createNew(reqBody);
