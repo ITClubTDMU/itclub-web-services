@@ -4,7 +4,6 @@ import { CONNECT_DB, GET_DB } from "./config/mongodb";
 import { env } from "./config/environment";
 import { errorHandlingMiddleware } from "./middlewares/errorHandlingMiddleware";
 import APIs_V1 from "./routes/v1";
-import cookieParser from "cookie-parser";
 import { corsOptions } from "./config/cors";
 
 const START_SERVER = () => {
@@ -13,8 +12,6 @@ const START_SERVER = () => {
   app.use(express.json());
 
   app.use(cors(corsOptions));
-
-  app.use(cookieParser());
 
   app.get("/", async (req, res) => {
     // Test Absolute import mapOrder

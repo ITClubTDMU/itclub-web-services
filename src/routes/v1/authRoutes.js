@@ -3,10 +3,8 @@ import { authController } from "~/controllers/authController";
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(authController.handleLogin)
-  .get(authController.handleLogout);
+router.route("/login").post(authController.handleLogin);
+router.route("/register").post(authController.handleRegister);
 
 const authRoutes = router;
 export default authRoutes;

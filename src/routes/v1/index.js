@@ -5,9 +5,8 @@ import newsRoutes from "./newsRoutes";
 import categoryRoutes from "./categoryRoutes";
 import postRoutes from "./postRoutes";
 import commentRoutes from "./commentRoutes";
-import { verifyJWT } from "~/middlewares/verifyJWT";
 import authRoutes from "./authRoutes";
-import refreshTokenRoutes from "./refreshRoutes";
+import sendMailRoutes from "./sendMailRoute";
 
 const router = express.Router();
 
@@ -18,15 +17,12 @@ router.get("/status", (req, res) => {
 });
 
 router.use("/auth", authRoutes);
-router.use("/refresh-token", refreshTokenRoutes);
-
 router.use("/news", newsRoutes);
 router.use("/category", categoryRoutes);
 router.use("/post", postRoutes);
 router.use("/comment", commentRoutes);
-
-router.use(verifyJWT);
 router.use("/user", userRoutes);
+router.use("/send-mail", sendMailRoutes);
 
 const APIs_V1 = router;
 

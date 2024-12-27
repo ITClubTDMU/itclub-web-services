@@ -17,7 +17,6 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   avatar: Joi.string().uri().default("/avatar_member.webp"),
   labels: Joi.array().items(Joi.string().trim().min(3).max(30)).default([]),
   contribution: Joi.number().integer().min(0).default(0),
-  refreshToken: Joi.string().default("?"),
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
@@ -57,7 +56,7 @@ const findOne = async (query) => {
     const user = await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .findOne({
-        $or: [{ username: query }, { email: query }, { refreshToken: query }],
+        $or: [{ username: query }, { email: query }],
       });
 
     return user;

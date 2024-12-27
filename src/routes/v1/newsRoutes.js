@@ -1,14 +1,18 @@
 import express from "express";
 import { newsController } from "~/controllers/newsController";
+import { verifyJWT } from "~/middlewares/verifyJWT";
 
 const router = express.Router();
 
-router.route("/").get(newsController.findAll).post(newsController.createNew);
+router
+  .route("/")
+  .get(newsController.findAll)
+  .post(verifyJWT, newsController.createNew);
 router
   .route("/:id")
   .get(newsController.findOne)
-  .put(newsController.updateOne)
-  .delete(newsController.deleteOne);
+  .put(verifyJWT, newsController.updateOne)
+  .delete(verifyJWT, newsController.deleteOne);
 
 const newsRoutes = router;
 export default newsRoutes;
