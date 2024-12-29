@@ -70,7 +70,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(CATEGORY_COLLECTION_SCHEMA, data);
 
     const updatedCategory = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
