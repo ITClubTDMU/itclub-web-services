@@ -100,7 +100,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(COMMENT_COLLECTION_SCHEMA, data);
 
     const updatedComment = await GET_DB()
       .collection(COMMENT_COLLECTION_NAME)
