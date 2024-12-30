@@ -19,10 +19,42 @@ const createNew = async (req, res, next) => {
 
 const findAll = async (req, res, next) => {
   try {
+    const { pageNumber, pageSize, sortBy, order, search } = req.query;
+
     const comments = await commentService.findAll();
+
+    const filter = {
+      pageNumber: pageNumber ? parseInt(pageNumber) : 1,
+      pageSize: pageSize ? parseInt(pageSize) : Number.MAX_VALUE,
+      sortBy: sortBy ? sortBy : "createdAt",
+      order: order ? order : "desc",
+      search: search ? search : "",
+    };
+
+    const searchedComments = comments.filter((comment) => {
+      return comment.content
+        .toLowerCase()
+        .includes(filter.search.toLowerCase());
+    });
+
+    const sortedComments = searchedComments.sort((a, b) => {
+      if (filter.order === "asc") {
+        return a[filter.sortBy] > b[filter.sortBy] ? 1 : -1;
+      } else {
+        return a[filter.sortBy] < b[filter.sortBy] ? 1 : -1;
+      }
+    });
+
+    const paginatedComments = sortedComments.slice(
+      (filter.pageNumber - 1) * filter.pageSize,
+      filter.pageNumber * filter.pageSize
+    );
+
     res
       .status(StatusCodes.OK)
-      .json(Result(StatusCodes.OK, "Get all comments successful", comments));
+      .json(
+        Result(StatusCodes.OK, "Get comments successful", paginatedComments)
+      );
   } catch (error) {
     next(error);
   }

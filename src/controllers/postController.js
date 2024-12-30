@@ -17,10 +17,41 @@ const createNew = async (req, res, next) => {
 
 const findAll = async (req, res, next) => {
   try {
+    const { pageNumber, pageSize, sortBy, order, search } = req.query;
+
     const posts = await postService.findAll();
+
+    const filter = {
+      pageNumber: pageNumber ? parseInt(pageNumber) : 1,
+      pageSize: pageSize ? parseInt(pageSize) : Number.MAX_VALUE,
+      sortBy: sortBy ? sortBy : "createdAt",
+      order: order ? order : "desc",
+      search: search ? search : "",
+    };
+
+    const searchedPosts = posts.filter((post) => {
+      return (
+        post.title.toLowerCase().includes(filter.search.toLowerCase()) ||
+        post.content.toLowerCase().includes(filter.search.toLowerCase())
+      );
+    });
+
+    const sortedPosts = searchedPosts.sort((a, b) => {
+      if (filter.order === "asc") {
+        return a[filter.sortBy] > b[filter.sortBy] ? 1 : -1;
+      } else {
+        return a[filter.sortBy] < b[filter.sortBy] ? 1 : -1;
+      }
+    });
+
+    const paginatedPosts = sortedPosts.slice(
+      (filter.pageNumber - 1) * filter.pageSize,
+      filter.pageNumber * filter.pageSize
+    );
+
     res
       .status(StatusCodes.OK)
-      .json(Result(StatusCodes.OK, "Get all posts successful", posts));
+      .json(Result(StatusCodes.OK, "Get posts successful", paginatedPosts));
   } catch (error) {
     next(error);
   }

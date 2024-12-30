@@ -7,7 +7,6 @@ import postRoutes from "./postRoutes";
 import commentRoutes from "./commentRoutes";
 import authRoutes from "./authRoutes";
 import sendMailRoutes from "./sendMailRoute";
-import { verifyJWT } from "~/middlewares/verifyJWT";
 
 const router = express.Router();
 
