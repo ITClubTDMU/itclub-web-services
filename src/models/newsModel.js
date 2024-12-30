@@ -85,7 +85,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
 
     const updatedNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)

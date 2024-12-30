@@ -23,11 +23,45 @@ const createNew = async (req, res, next) => {
 
 const findAll = async (req, res, next) => {
   try {
+    const { pageNumber, pageSize, sortBy, order, search } = req.query;
+
     const categories = await categoryService.findAll();
+
+    const filter = {
+      pageNumber: pageNumber ? parseInt(pageNumber) : 1,
+      pageSize: pageSize ? parseInt(pageSize) : Number.MAX_VALUE,
+      sortBy: sortBy ? sortBy : "createdAt",
+      order: order ? order : "desc",
+      search: search ? search : "",
+    };
+
+    const searchedCategories = categories.filter((category) => {
+      return category.categoryName
+        .toLowerCase()
+        .includes(filter.search.toLowerCase());
+    });
+
+    const sortedCategories = searchedCategories.sort((a, b) => {
+      if (filter.order === "asc") {
+        return a[filter.sortBy] > b[filter.sortBy] ? 1 : -1;
+      } else {
+        return a[filter.sortBy] < b[filter.sortBy] ? 1 : -1;
+      }
+    });
+
+    const paginatedCategories = sortedCategories.slice(
+      (filter.pageNumber - 1) * filter.pageSize,
+      filter.pageNumber * filter.pageSize
+    );
+
     res
       .status(StatusCodes.OK)
       .json(
-        Result(StatusCodes.OK, "Get all categories successful", categories)
+        Result(
+          StatusCodes.OK,
+          "Get categories successful",
+          paginatedCategories
+        )
       );
   } catch (error) {
     next(error);

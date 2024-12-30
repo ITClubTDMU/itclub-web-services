@@ -93,7 +93,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(data);
+    const validatedData = await validateData(POST_COLLECTION_SCHEMA, data);
 
     const updatedPost = await GET_DB()
       .collection(POST_COLLECTION_NAME)
