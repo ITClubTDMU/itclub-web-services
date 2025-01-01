@@ -3,13 +3,10 @@ import { ObjectId } from "mongodb";
 import { env } from "~/config/environment";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
+import { checkImageType } from "~/utils/checkImageType";
 import { StatusCodes } from "~/utils/statusCodes";
-import { authorize } from "~/utils/uploadImage";
-import {
-  OBJECT_ID_RULE,
-  OBJECT_ID_RULE_MESSAGE,
-  validateData,
-} from "~/utils/validators";
+import { authorize, uploadFile } from "~/utils/uploadImage";
+import { validateData } from "~/utils/validators";
 
 const NEWS_COLLECTION_NAME = "newses";
 const NEWS_COLLECTION_SCHEMA = Joi.object({
@@ -18,26 +15,45 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   shortDescription: Joi.string().trim().min(3).max(100),
   thumbnail: Joi.string().uri(),
   images: Joi.array().items(Joi.string().uri()).default([]),
-  categories: Joi.array()
-    .items(
-      Joi.string()
-        .trim()
-        .pattern(OBJECT_ID_RULE)
-        .message(OBJECT_ID_RULE_MESSAGE)
-    )
-    .default([]),
+  categories: Joi.string().trim().default(""),
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
-const createNew = async (data) => {
+const uploadImages = async (files) => {
+  if (files === undefined) {
+    return ["/thumbnail_connect.avif"];
+  }
+  if (!checkImageType(files)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
+  }
+  const authClient = await authorize();
+  const images = await Promise.all(
+    files.map(async (file) => {
+      return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
+    })
+  );
+
+  return images;
+};
+
+const createNew = async (req) => {
   try {
-    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
+    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, req.body);
+    if (!validatedData.title.trim() || !validatedData.content.trim()) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Title and content are required"
+      );
+    }
+
+    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
+    const images = await uploadImages(req.files["images"] ?? []);
 
     const createdNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
-      .insertOne(validatedData);
+      .insertOne({ ...validatedData, thumbnail, images });
 
     const { insertedId } = createdNews;
     const newNews = await findOneById(insertedId);
@@ -86,15 +102,19 @@ const findAll = async () => {
   }
 };
 
-const updateOne = async (id, data) => {
+const updateOne = async (req) => {
   try {
-    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
+    const { id } = req.params;
+
+    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, req.body);
+    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
+    const images = await uploadImages(req.files["images"] ?? []);
 
     const updatedNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: validatedData },
+        { $set: { ...validatedData, thumbnail, images } },
         { returnDocument: "after" }
       );
 

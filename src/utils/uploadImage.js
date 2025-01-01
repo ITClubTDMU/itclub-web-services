@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { Readable } from "stream";
+import { env } from "~/config/environment";
 
 const SCOPE = [
   "https://www.googleapis.com/auth/drive",
@@ -9,9 +10,9 @@ const SCOPE = [
 
 const authorize = async () => {
   const jwtClient = new google.auth.JWT(
-    process.env.CLIENT_EMAIL,
+    env.CLIENT_EMAIL,
     null,
-    process.env.PRIVATE_KEY.replace(/\\n/gm, "\n"),
+    env.PRIVATE_KEY.replace(/\\n/gm, "\n"),
     SCOPE
   );
 

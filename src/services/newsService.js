@@ -2,9 +2,9 @@ import { newsModel } from "~/models/newsModel";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
 
-const createNew = async (reqBody) => {
+const createNew = async (req) => {
   try {
-    const createdNews = await newsModel.createNew(reqBody);
+    const createdNews = await newsModel.createNew(req);
 
     return createdNews;
   } catch (error) {
@@ -33,9 +33,9 @@ const findOne = async (id) => {
   }
 };
 
-const updateOne = async (id, data) => {
+const updateOne = async (req) => {
   try {
-    const updatedNews = await newsModel.updateOne(id, data);
+    const updatedNews = await newsModel.updateOne(req);
     return updatedNews;
   } catch (error) {
     throw error;

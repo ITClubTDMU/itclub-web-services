@@ -39,6 +39,12 @@ const POST_COLLECTION_SCHEMA = Joi.object({
 const createNew = async (data) => {
   try {
     const validatedData = await validateData(POST_COLLECTION_SCHEMA, data);
+    if (!validatedData.title.trim() || !validatedData.content.trim()) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Title and content are required"
+      );
+    }
 
     const createdPost = await GET_DB()
       .collection(POST_COLLECTION_NAME)
