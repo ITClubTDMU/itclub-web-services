@@ -17,7 +17,7 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   content: Joi.string().trim().min(3),
   shortDescription: Joi.string().trim().min(3).max(100),
   thumbnail: Joi.string().uri(),
-  images: Joi.array().items(Joi.optional()).default([]),
+  images: Joi.array().items(Joi.string().uri()).default([]),
   categories: Joi.array()
     .items(
       Joi.string()
@@ -31,25 +31,13 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
-const uploadImages = async (files) => {
-  const authClient = await authorize();
-  const images = await Promise.all(
-    files.map(async (file) => {
-      return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
-    })
-  );
-
-  return images;
-};
-
 const createNew = async (data) => {
   try {
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
-    const images = await uploadImages(data.images);
 
     const createdNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
-      .insertOne({ ...validatedData, images });
+      .insertOne(validatedData);
 
     const { insertedId } = createdNews;
     const newNews = await findOneById(insertedId);
@@ -101,13 +89,12 @@ const findAll = async () => {
 const updateOne = async (id, data) => {
   try {
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
-    const images = await uploadImages(data.images);
 
     const updatedNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: { ...validatedData, images } },
+        { $set: validatedData },
         { returnDocument: "after" }
       );
 

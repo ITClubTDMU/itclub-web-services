@@ -1,12 +1,32 @@
+import { env } from "~/config/environment";
 import { newsService } from "~/services/newsService";
+import ApiError from "~/utils/ApiError";
+import { checkImageType } from "~/utils/checkImageType";
 import { Result } from "~/utils/result";
 import { StatusCodes } from "~/utils/statusCodes";
+import { authorize, uploadFile } from "~/utils/uploadImage";
+
+const uploadImages = async (files) => {
+  if (!checkImageType(files)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
+  }
+  const authClient = await authorize();
+  const images = await Promise.all(
+    files.map(async (file) => {
+      return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
+    })
+  );
+
+  return images;
+};
 
 const createNew = async (req, res, next) => {
   try {
     const news = req.body;
-    console.log(news);
-    const newNews = await newsService.createNew(news);
+    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
+    const images = await uploadImages(req.files["images"] ?? []);
+
+    const newNews = await newsService.createNew({ ...news, thumbnail, images });
     res
       .status(StatusCodes.CREATED)
       .json(Result(StatusCodes.CREATED, "Create new news successful", newNews));
@@ -76,7 +96,14 @@ const updateOne = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
-    const updatedNews = await newsService.updateOne(id, data);
+    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
+    const images = await uploadImages(req.files["images"] ?? []);
+    const updatedNews = await newsService.updateOne(id, {
+      ...data,
+      thumbnail,
+      images,
+    });
+
     res
       .status(StatusCodes.OK)
       .json(Result(StatusCodes.OK, "Update news successful", updatedNews));
