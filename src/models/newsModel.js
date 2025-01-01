@@ -1,8 +1,10 @@
 import Joi from "joi";
 import { ObjectId } from "mongodb";
+import { env } from "~/config/environment";
 import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "~/utils/statusCodes";
+import { authorize } from "~/utils/uploadImage";
 import {
   OBJECT_ID_RULE,
   OBJECT_ID_RULE_MESSAGE,
@@ -15,6 +17,7 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   content: Joi.string().trim().min(3),
   shortDescription: Joi.string().trim().min(3).max(100),
   thumbnail: Joi.string().uri(),
+  images: Joi.array().items(Joi.optional()).default([]),
   categories: Joi.array()
     .items(
       Joi.string()
@@ -28,13 +31,25 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
 
+const uploadImages = async (files) => {
+  const authClient = await authorize();
+  const images = await Promise.all(
+    files.map(async (file) => {
+      return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
+    })
+  );
+
+  return images;
+};
+
 const createNew = async (data) => {
   try {
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
+    const images = await uploadImages(data.images);
 
     const createdNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
-      .insertOne(validatedData);
+      .insertOne({ ...validatedData, images });
 
     const { insertedId } = createdNews;
     const newNews = await findOneById(insertedId);
@@ -86,12 +101,13 @@ const findAll = async () => {
 const updateOne = async (id, data) => {
   try {
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, data);
+    const images = await uploadImages(data.images);
 
     const updatedNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: validatedData },
+        { $set: { ...validatedData, images } },
         { returnDocument: "after" }
       );
 
