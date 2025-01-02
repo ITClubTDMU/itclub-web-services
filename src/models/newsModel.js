@@ -22,9 +22,6 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
 });
 
 const uploadImages = async (files) => {
-  if (files === undefined) {
-    return ["/thumbnail_connect.avif"];
-  }
   if (!checkImageType(files)) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
   }
@@ -41,11 +38,13 @@ const uploadImages = async (files) => {
 const createNew = async (req) => {
   try {
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, req.body);
-    if (!validatedData.title.trim() || !validatedData.content.trim()) {
+    if (!validatedData.title || !validatedData.content) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
         "Title and content are required"
       );
+    } else if (req.files["thumbnail"] === undefined) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Thumbnail is required");
     }
 
     const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
@@ -107,14 +106,21 @@ const updateOne = async (req) => {
     const { id } = req.params;
 
     const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, req.body);
-    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
-    const images = await uploadImages(req.files["images"] ?? []);
+
+    if (req.files["thumbnail"] !== undefined) {
+      validatedData["thumbnail"] = (
+        await uploadImages(req.files["thumbnail"])
+      )[0];
+    }
+    if (req.files["images"] !== undefined) {
+      validatedData["images"] = await uploadImages(req.files["images"]);
+    }
 
     const updatedNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: { ...validatedData, thumbnail, images } },
+        { $set: validatedData },
         { returnDocument: "after" }
       );
 
