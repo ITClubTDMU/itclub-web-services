@@ -5,7 +5,7 @@ import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { checkImageType } from "~/utils/checkImageType";
 import { StatusCodes } from "~/utils/statusCodes";
-import { authorize, uploadFile } from "~/utils/uploadImage";
+import { authorize, uploadFile } from "~/utils/googleDriveHandle";
 import { validateData } from "~/utils/validators";
 
 const NEWS_COLLECTION_NAME = "newses";
@@ -22,17 +22,21 @@ const NEWS_COLLECTION_SCHEMA = Joi.object({
 });
 
 const uploadImages = async (files) => {
-  if (!checkImageType(files)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
-  }
-  const authClient = await authorize();
-  const images = await Promise.all(
-    files.map(async (file) => {
-      return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
-    })
-  );
+  try {
+    if (!checkImageType(files)) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
+    }
+    const authClient = await authorize();
+    const images = await Promise.all(
+      files.map(async (file) => {
+        return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
+      })
+    );
 
-  return images;
+    return images;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 const createNew = async (req) => {
