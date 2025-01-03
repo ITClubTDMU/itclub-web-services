@@ -46,6 +46,16 @@ const COMMENT_COLLECTION_SCHEMA = Joi.object({
 const createNew = async (data) => {
   try {
     const validatedData = await validateData(COMMENT_COLLECTION_SCHEMA, data);
+    if (
+      !validatedData.postId.trim() ||
+      !validatedData.userId.trim() ||
+      !validatedData.content.trim()
+    ) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Post id, user id, and content are required"
+      );
+    }
 
     const createdComment = await GET_DB()
       .collection(COMMENT_COLLECTION_NAME)

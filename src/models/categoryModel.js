@@ -16,6 +16,9 @@ const CATEGORY_COLLECTION_SCHEMA = Joi.object({
 const createNew = async (data) => {
   try {
     const validatedData = await validateData(CATEGORY_COLLECTION_SCHEMA, data);
+    if (!validatedData.categoryName.trim()) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Category name is required");
+    }
 
     const createdCategory = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)

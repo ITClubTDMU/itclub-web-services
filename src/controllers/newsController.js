@@ -4,9 +4,8 @@ import { StatusCodes } from "~/utils/statusCodes";
 
 const createNew = async (req, res, next) => {
   try {
-    const news = req.body;
-    console.log(news);
-    const newNews = await newsService.createNew(news);
+    const newNews = await newsService.createNew(req);
+
     res
       .status(StatusCodes.CREATED)
       .json(Result(StatusCodes.CREATED, "Create new news successful", newNews));
@@ -33,9 +32,10 @@ const findAll = async (req, res, next) => {
       return (
         news.title.toLowerCase().includes(filter.search.toLowerCase()) ||
         news.content.toLowerCase().includes(filter.search.toLowerCase()) ||
-        news.shortDescription
-          .toLowerCase()
-          .includes(filter.search.toLowerCase())
+        (news.shortDescription &&
+          news.shortDescription
+            .toLowerCase()
+            .includes(filter.search.toLowerCase()))
       );
     });
 
@@ -74,9 +74,8 @@ const findOne = async (req, res, next) => {
 
 const updateOne = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const data = req.body;
-    const updatedNews = await newsService.updateOne(id, data);
+    const updatedNews = await newsService.updateOne(req);
+
     res
       .status(StatusCodes.OK)
       .json(Result(StatusCodes.OK, "Update news successful", updatedNews));

@@ -15,4 +15,10 @@ export const env = {
   SERVICE_EMAIL: process.env.SERVICE_EMAIL,
   USER_AUTH: process.env.USER_AUTH,
   PASS_AUTH: process.env.PASS_AUTH,
+  CLIENT_EMAIL: process.env.CLIENT_EMAIL,
+  PRIVATE_KEY: process.env.PRIVATE_KEY,
+  NEWSES_FOLDER_ID: process.env.NEWSES_FOLDER_ID,
+  ACTIVITIES_FOLDER_ID: process.env.ACTIVITIES_FOLDER_ID,
+  USERS_FOLDER_ID: process.env.USERS_FOLDER_ID,
+  AVATAR_USERS_FOLDER_ID: process.env.AVATAR_USERS_FOLDER_ID,
 };
