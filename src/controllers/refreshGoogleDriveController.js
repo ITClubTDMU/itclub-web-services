@@ -8,30 +8,26 @@ import {
 import { Result } from "~/utils/result";
 import { StatusCodes } from "~/utils/statusCodes";
 
-const getFileIds = async (newses) => {
-  try {
-    const fileIds = [];
-    await Promise.all(
-      newses.map(async (news) => {
-        const thumbnailId = news.thumbnail.split("/d/")[1];
-        fileIds.push(thumbnailId);
-        await Promise.all(
-          news.images.map(async (image) => {
-            const imageId = image.split("/d/")[1];
-            fileIds.push(imageId);
-          })
-        );
-      })
-    );
-
-    return fileIds;
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
 const refreshNews = async (req, res, next) => {
   try {
+    const getFileIds = async (newses) => {
+      const fileIds = [];
+      await Promise.all(
+        newses.map(async (news) => {
+          const thumbnailId = news.thumbnail.split("/d/")[1];
+          fileIds.push(thumbnailId);
+          await Promise.all(
+            news.images.map(async (image) => {
+              const imageId = image.split("/d/")[1];
+              fileIds.push(imageId);
+            })
+          );
+        })
+      );
+
+      return fileIds;
+    };
+
     const newses = await newsService.findAll();
     const fileIds = await getFileIds(newses);
     const authClient = await authorize();

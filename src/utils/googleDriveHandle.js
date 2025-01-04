@@ -93,7 +93,7 @@ const deleteFiles = async (authClient, fileIds) => {
       fileIds.map(async (fileId) => {
         await drive.files.delete({ fileId });
       })
-    )
+    );
   } catch (error) {
     throw new Error(error);
   }
@@ -102,25 +102,106 @@ const deleteFiles = async (authClient, fileIds) => {
 const getFilesInFolder = async (authClient, folderId) => {
   try {
     const drive = google.drive({ version: "v3", auth: authClient });
+    const fileIds = [];
 
-    const result = [];
-    let pageToken = null;
+    const fetchFiles = async (parentFolderId) => {
+      let pageToken = null;
 
-    do {
-      const response = await drive.files.list({
-        q: `'${folderId}' in parents and trashed=false`,
-        fields: "nextPageToken, files(id, name)",
-        pageToken: pageToken,
-      });
+      do {
+        const response = await drive.files.list({
+          q: `'${parentFolderId}' in parents and trashed=false`,
+          fields: "nextPageToken, files(id, name, mimeType)",
+          pageToken: pageToken,
+        });
 
-      response.data.files.forEach((file) => result.push(file.id));
-      pageToken = response.data.nextPageToken;
-    } while (pageToken);
+        for (const file of response.data.files) {
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            await fetchFiles(file.id);
+          } else {
+            fileIds.push(file.id);
+          }
+        }
 
-    return result;
+        pageToken = response.data.nextPageToken;
+      } while (pageToken);
+    };
+
+    await fetchFiles(folderId);
+
+    return fileIds;
   } catch (error) {
     throw new Error(error);
   }
 };
 
-export { authorize, uploadFile, deleteFiles, getFilesInFolder };
+const createFolder = async (authClient, folderName, parentFolderId) => {
+  try {
+    const drive = google.drive({ version: "v3", auth: authClient });
+    const fileMetaData = {
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentFolderId],
+    };
+
+    const response = await drive.files.create({
+      requestBody: fileMetaData,
+      fields: "id",
+    });
+
+    return response.data.id;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+const deleteFolder = async (authClient, folderId) => {
+  try {
+    const drive = google.drive({ version: "v3", auth: authClient });
+
+    const listFiles = async (folderId, nextPageToken = null) => {
+      const response = await drive.files.list({
+        q: `'${folderId}' in parents`,
+        fields: "nextPageToken, files(id, name, mimeType)",
+        pageToken: nextPageToken,
+      });
+      return response.data;
+    };
+
+    const deleteFile = async (fileId) => {
+      await drive.files.delete({ fileId });
+    };
+
+    let pageToken = null;
+    do {
+      const { files, nextPageToken: newPageToken } = await listFiles(
+        folderId,
+        pageToken
+      );
+      pageToken = newPageToken;
+
+      const deletePromises = files.map(async (file) => {
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+          await deleteFolder(authClient, file.id);
+        } else {
+          await deleteFile(file.id);
+        }
+      });
+
+      await Promise.all(deletePromises);
+    } while (pageToken);
+
+    await drive.files.delete({ fileId: folderId });
+    console.log(`Deleted folder: ${folderId}`);
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+export {
+  authorize,
+  uploadFile,
+  deleteFiles,
+  getFilesInFolder,
+  createFolder,
+  deleteFolder,
+};

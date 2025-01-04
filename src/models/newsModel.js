@@ -5,32 +5,48 @@ import { GET_DB } from "~/config/mongodb";
 import ApiError from "~/utils/ApiError";
 import { checkImageType } from "~/utils/checkImageType";
 import { StatusCodes } from "~/utils/statusCodes";
-import { authorize, uploadFile } from "~/utils/googleDriveHandle";
+import {
+  authorize,
+  createFolder,
+  deleteFolder,
+  uploadFile,
+} from "~/utils/googleDriveHandle";
 import { validateData } from "~/utils/validators";
 
 const NEWS_COLLECTION_NAME = "newses";
 const NEWS_COLLECTION_SCHEMA = Joi.object({
-  title: Joi.string().trim().min(3).max(500),
+  title: Joi.string().trim().min(3),
   content: Joi.string().trim().min(3),
-  shortDescription: Joi.string().trim().min(3).max(100),
+  shortDescription: Joi.string().trim().min(3),
   thumbnail: Joi.string().uri(),
   images: Joi.array().items(Joi.string().uri()).default([]),
   categories: Joi.string().trim().default(""),
+  driveFolderId: Joi.string().trim().default(""),
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
+const NEWS_COLLECTION_VALIDATE = Joi.object({
+  title: Joi.string().trim().min(3),
+  content: Joi.string().trim().min(3),
+  shortDescription: Joi.string().trim().min(3),
+  thumbnail: Joi.string().uri(),
+  images: Joi.array().items(Joi.string().uri()),
+  categories: Joi.string().trim(),
+  driveFolderId: Joi.string().trim(),
 
-const uploadImages = async (files) => {
+  createdAt: Joi.date().timestamp("javascript"),
+  updatedAt: Joi.date().timestamp("javascript"),
+});
+
+const uploadImages = async (files, authClient, folderId) => {
   try {
     if (!checkImageType(files)) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid image type");
     }
-    const authClient = await authorize();
+
     const images = await Promise.all(
-      files.map(async (file) => {
-        return await uploadFile(authClient, file, env.NEWSES_FOLDER_ID);
-      })
+      files.map(async (file) => await uploadFile(authClient, file, folderId))
     );
 
     return images;
@@ -51,12 +67,31 @@ const createNew = async (req) => {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Thumbnail is required");
     }
 
-    const thumbnail = (await uploadImages(req.files["thumbnail"]))[0];
-    const images = await uploadImages(req.files["images"] ?? []);
+    const authClient = await authorize();
+    const folderId = await createFolder(
+      authClient,
+      new Date().toISOString(),
+      env.NEWSES_FOLDER_ID
+    );
+
+    const thumbnail = (
+      await uploadImages(req.files["thumbnail"], authClient, folderId)
+    )[0];
+
+    const images = await uploadImages(
+      req.files["images"] ?? [],
+      authClient,
+      folderId
+    );
 
     const createdNews = await GET_DB()
       .collection(NEWS_COLLECTION_NAME)
-      .insertOne({ ...validatedData, thumbnail, images });
+      .insertOne({
+        ...validatedData,
+        thumbnail,
+        images,
+        driveFolderId: folderId,
+      });
 
     const { insertedId } = createdNews;
     const newNews = await findOneById(insertedId);
@@ -108,16 +143,29 @@ const findAll = async () => {
 const updateOne = async (req) => {
   try {
     const { id } = req.params;
+    const news = await findOne(id);
 
-    const validatedData = await validateData(NEWS_COLLECTION_SCHEMA, req.body);
+    const validatedData = await validateData(
+      NEWS_COLLECTION_VALIDATE,
+      req.body
+    );
 
+    const authClient = await authorize();
     if (req.files["thumbnail"] !== undefined) {
       validatedData["thumbnail"] = (
-        await uploadImages(req.files["thumbnail"])
+        await uploadImages(
+          req.files["thumbnail"],
+          authClient,
+          news.driveFolderId
+        )
       )[0];
     }
     if (req.files["images"] !== undefined) {
-      validatedData["images"] = await uploadImages(req.files["images"]);
+      validatedData["images"] = await uploadImages(
+        req.files["images"] ?? [],
+        authClient,
+        news.driveFolderId
+      );
     }
 
     const updatedNews = await GET_DB()
@@ -147,6 +195,9 @@ const deleteOne = async (id) => {
     if (!deletedNews) {
       throw new ApiError(StatusCodes.NOT_FOUND, "News not found");
     }
+
+    const authClient = await authorize();
+    await deleteFolder(authClient, deletedNews.driveFolderId);
 
     return deletedNews;
   } catch (error) {

@@ -42,6 +42,28 @@ const COMMENT_COLLECTION_SCHEMA = Joi.object({
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
 });
+const COMMENT_COLLECTION_VALIDATE = Joi.object({
+  postId: Joi.string()
+    .trim()
+    .pattern(OBJECT_ID_RULE)
+    .message(OBJECT_ID_RULE_MESSAGE),
+  userId: Joi.string()
+    .trim()
+    .pattern(OBJECT_ID_RULE)
+    .message(OBJECT_ID_RULE_MESSAGE),
+  content: Joi.string().trim().min(3),
+  images: Joi.array().items(Joi.string().uri()),
+  approved: Joi.boolean(),
+  favorites: Joi.array().items(
+    Joi.string().trim().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ), // array of user ids
+  replies: Joi.array().items(
+    Joi.string().trim().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ), // array of comment ids
+
+  createdAt: Joi.date().timestamp("javascript"),
+  updatedAt: Joi.date().timestamp("javascript"),
+});
 
 const createNew = async (data) => {
   try {
@@ -110,7 +132,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(COMMENT_COLLECTION_SCHEMA, data);
+    const validatedData = await validateData(COMMENT_COLLECTION_VALIDATE, data);
 
     const updatedComment = await GET_DB()
       .collection(COMMENT_COLLECTION_NAME)
