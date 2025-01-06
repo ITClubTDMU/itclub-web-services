@@ -11,7 +11,7 @@ import {
 
 const POST_COLLECTION_NAME = "posts";
 const POST_COLLECTION_SCHEMA = Joi.object({
-  title: Joi.string().trim().min(3).max(500),
+  title: Joi.string().trim().min(3),
   content: Joi.string().trim().min(3),
   images: Joi.array().items(Joi.string().uri()).default([]),
   categories: Joi.array()
@@ -34,6 +34,21 @@ const POST_COLLECTION_SCHEMA = Joi.object({
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
+});
+const POST_COLLECTION_VALIDATE = Joi.object({
+  title: Joi.string().trim().min(3),
+  content: Joi.string().trim().min(3),
+  images: Joi.array().items(Joi.string().uri()),
+  categories: Joi.array().items(
+    Joi.string().trim().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ), // array of category ids
+  approved: Joi.boolean(),
+  favorites: Joi.array().items(
+    Joi.string().trim().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ), // array of user ids
+
+  createdAt: Joi.date().timestamp("javascript"),
+  updatedAt: Joi.date().timestamp("javascript"),
 });
 
 const createNew = async (data) => {
@@ -99,7 +114,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(POST_COLLECTION_SCHEMA, data);
+    const validatedData = await validateData(POST_COLLECTION_VALIDATE, data);
 
     const updatedPost = await GET_DB()
       .collection(POST_COLLECTION_NAME)

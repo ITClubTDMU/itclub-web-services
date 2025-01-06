@@ -7,10 +7,16 @@ import { validateData } from "~/utils/validators";
 
 const CATEGORY_COLLECTION_NAME = "categories";
 const CATEGORY_COLLECTION_SCHEMA = Joi.object({
-  categoryName: Joi.string().trim().min(1).max(100),
+  categoryName: Joi.string().trim().min(1),
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
+});
+const CATEGORY_COLLECTION_VALIDATE = Joi.object({
+  categoryName: Joi.string().trim().min(1),
+
+  createdAt: Joi.date().timestamp("javascript"),
+  updatedAt: Joi.date().timestamp("javascript"),
 });
 
 const createNew = async (data) => {
@@ -73,7 +79,10 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(CATEGORY_COLLECTION_SCHEMA, data);
+    const validatedData = await validateData(
+      CATEGORY_COLLECTION_VALIDATE,
+      data
+    );
 
     const updatedCategory = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)

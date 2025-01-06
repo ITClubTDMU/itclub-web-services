@@ -7,6 +7,7 @@ import postRoutes from "./postRoutes";
 import commentRoutes from "./commentRoutes";
 import authRoutes from "./authRoutes";
 import sendMailRoutes from "./sendMailRoute";
+import refreshGoogleDriveRoutes from "./refreshGoogleDriveRoute";
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.use("/post", postRoutes);
 router.use("/comment", commentRoutes);
 router.use("/user", userRoutes);
 router.use("/send-mail", sendMailRoutes);
+router.use("/refresh-google-drive", refreshGoogleDriveRoutes);
 
 const APIs_V1 = router;
 

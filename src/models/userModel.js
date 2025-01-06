@@ -7,20 +7,34 @@ import { validateData } from "~/utils/validators";
 
 const USER_COLLECTION_NAME = "users";
 const USER_COLLECTION_SCHEMA = Joi.object({
-  username: Joi.string().trim().alphanum().min(3).max(30),
-  password: Joi.string().trim().min(8).max(30),
+  username: Joi.string().trim().alphanum().min(3),
+  password: Joi.string().trim().min(8),
   email: Joi.string().trim().email(),
   roles: Joi.array()
     .items(Joi.string().valid("user", "admin"))
     .default(["user"]),
-  fullName: Joi.string().trim().min(3).max(50).default("Anonymous"),
+  fullName: Joi.string().trim().min(3).default("Anonymous"),
   avatar: Joi.string().uri().default("/avatar_member.webp"),
-  labels: Joi.array().items(Joi.string().trim().min(3).max(30)).default([]),
+  labels: Joi.array().items(Joi.string().trim().min(3)).default([]),
   contribution: Joi.number().integer().min(0).default(0),
 
   createdAt: Joi.date().timestamp("javascript").default(Date.now()),
   updatedAt: Joi.date().timestamp("javascript").default(null),
   _destroy: Joi.boolean().default(false),
+});
+const USER_COLLECTION_VALIDATE = Joi.object({
+  username: Joi.string().trim().alphanum().min(3),
+  password: Joi.string().trim().min(8),
+  email: Joi.string().trim().email(),
+  roles: Joi.array().items(Joi.string().valid("user", "admin")),
+  fullName: Joi.string().trim().min(3),
+  avatar: Joi.string().uri(),
+  labels: Joi.array().items(Joi.string().trim().min(3)),
+  contribution: Joi.number().integer().min(0),
+
+  createdAt: Joi.date().timestamp("javascript"),
+  updatedAt: Joi.date().timestamp("javascript"),
+  _destroy: Joi.boolean(),
 });
 
 const createNew = async (data) => {
@@ -80,7 +94,7 @@ const findAll = async () => {
 
 const updateOne = async (id, data) => {
   try {
-    const validatedData = await validateData(USER_COLLECTION_SCHEMA, data);
+    const validatedData = await validateData(USER_COLLECTION_VALIDATE, data);
 
     const updatedUser = await GET_DB()
       .collection(USER_COLLECTION_NAME)
