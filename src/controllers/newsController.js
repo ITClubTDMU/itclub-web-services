@@ -16,7 +16,8 @@ const createNew = async (req, res, next) => {
 
 const findAll = async (req, res, next) => {
   try {
-    const { pageNumber, pageSize, sortBy, order, search } = req.query;
+    const { pageNumber, pageSize, sortBy, order, search, categories } =
+      req.query;
 
     const newses = await newsService.findAll();
 
@@ -26,20 +27,28 @@ const findAll = async (req, res, next) => {
       sortBy: sortBy ? sortBy : "createdAt",
       order: order ? order : "desc",
       search: search ? search : "",
+      categories: categories ? categories.split(",") : [],
     };
 
-    const searchedNewses = newses.filter((news) => {
-      return (
+    const matchedNewses = newses.filter((news) => {
+      let isMatch =
         news.title.toLowerCase().includes(filter.search.toLowerCase()) ||
         news.content.toLowerCase().includes(filter.search.toLowerCase()) ||
         (news.shortDescription &&
           news.shortDescription
             .toLowerCase()
-            .includes(filter.search.toLowerCase()))
-      );
+            .includes(filter.search.toLowerCase()));
+      if (filter.categories.length > 0) {
+        isMatch =
+          isMatch &&
+          filter.categories.some((category) =>
+            news.categories.includes(category)
+          );
+      }
+      return isMatch;
     });
 
-    const sortedNewses = searchedNewses.sort((a, b) => {
+    const sortedNewses = matchedNewses.sort((a, b) => {
       if (filter.order === "asc") {
         return a[filter.sortBy] > b[filter.sortBy] ? 1 : -1;
       } else {
