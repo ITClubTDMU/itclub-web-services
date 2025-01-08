@@ -5,7 +5,7 @@ import { StatusCodes } from "~/utils/statusCodes";
 const createNew = async (req, res, next) => {
   try {
     const post = req.body;
-    console.log(post);
+    // console.log(post);
     const newPost = await postService.createNew(post);
     res
       .status(StatusCodes.CREATED)

@@ -191,7 +191,7 @@ const deleteFolder = async (authClient, folderId) => {
     } while (pageToken);
 
     await drive.files.delete({ fileId: folderId });
-    console.log(`Deleted folder: ${folderId}`);
+    // console.log(`Deleted folder: ${folderId}`);
   } catch (error) {
     throw new Error(error);
   }

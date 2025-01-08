@@ -23,7 +23,7 @@ const handleLogin = async (req, res, next) => {
         .status(StatusCodes.UNAUTHORIZED)
         .json(Result(StatusCodes.UNAUTHORIZED, "Password incorrect"));
     }
-    console.log(user);
+    // console.log(user);
     // create JWTs
     const accessToken = jwt.sign(
       { userId: user._id },

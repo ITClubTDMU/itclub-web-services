@@ -5,7 +5,7 @@ import { StatusCodes } from "~/utils/statusCodes";
 const createNew = async (req, res, next) => {
   try {
     const comment = req.body;
-    console.log(comment);
+    // console.log(comment);
     const newComment = await commentService.createNew(comment);
     res
       .status(StatusCodes.CREATED)

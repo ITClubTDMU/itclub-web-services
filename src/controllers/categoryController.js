@@ -5,7 +5,7 @@ import { StatusCodes } from "~/utils/statusCodes";
 const createNew = async (req, res, next) => {
   try {
     const category = req.body;
-    console.log(category);
+    // console.log(category);
     const newCategory = await categoryService.createNew(category);
     res
       .status(StatusCodes.CREATED)

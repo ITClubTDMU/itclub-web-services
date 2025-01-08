@@ -104,7 +104,7 @@ const updateOne = async (id, data) => {
         { returnDocument: "after" }
       );
 
-    console.log(updatedUser);
+    // console.log(updatedUser);
 
     if (!updatedUser) {
       throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
